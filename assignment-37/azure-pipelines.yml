@@ -1,0 +1,24 @@
+trigger:
+  - main
+
+pool:
+  name: SelfHostedPool
+
+jobs:
+  - job: TestAgent
+    displayName: 'Self-Hosted Agent Verification'
+    steps:
+      - script: |
+          echo '=== OS Info ==='
+          uname -a
+        displayName: 'Print OS Details'
+
+      - script: |
+          echo '=== Current User ==='
+          whoami
+        displayName: 'Print User'
+
+      - script: |
+          echo '=== Disk Space ==='
+          df -h
+        displayName: 'Print Disk'
