@@ -1,4 +1,4 @@
-# Assignment 38 — Mini-Finance Static Website CI/CD
+# Assignment 38 — Azure-Static-Website CI/CD
 
 ## What Was Built
 
