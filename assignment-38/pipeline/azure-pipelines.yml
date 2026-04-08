@@ -1,0 +1,28 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  name: SelfHostedPool
+
+variables:
+  deployPath: '/var/www/html'
+
+jobs:
+  - job: Deploy
+    displayName: 'Deploy Mini-Finance to Nginx VM'
+    steps:
+      - checkout: self
+      - task: CopyFilesOverSSH@0
+        inputs:
+          sshEndpoint: 'ubuntu-nginx-ssh'
+          sourceFolder: '$(Build.SourcesDirectory)'
+          contents: '**'
+          targetFolder: '$(deployPath)'
+          cleanTargetFolder: true
+      - task: SSH@0
+        inputs:
+          sshEndpoint: 'ubuntu-nginx-ssh'
+          runOptions: 'inline'
+          inline: ls -la /var/www/html

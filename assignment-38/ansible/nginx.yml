@@ -1,0 +1,25 @@
+---
+- name: Configure Nginx
+  hosts: webservers
+  become: yes
+  tasks:
+    - name: Install Nginx
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+
+    - name: Start and enable Nginx
+      systemd:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Set web root ownership
+      file:
+        path: /var/www/html
+        state: directory
+        owner: azureuser
+        group: azureuser
+        mode: '0755'
+        recurse: yes
