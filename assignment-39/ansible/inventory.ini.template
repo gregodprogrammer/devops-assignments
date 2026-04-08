@@ -1,0 +1,4 @@
+[webservers]
+YOUR_VM_PUBLIC_IP ansible_user=azureuser \
+  ansible_ssh_private_key_file=~/.ssh/azureagent-key \
+  ansible_ssh_common_args='-o StrictHostKeyChecking=no'
