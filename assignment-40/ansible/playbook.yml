@@ -1,0 +1,168 @@
+---
+- name: Configure Backend VM - MySQL Only
+  hosts: backend
+  become: yes
+  vars_files:
+    - vars.yml
+
+  tasks:
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install MySQL server and python3-pymysql
+      apt:
+        name:
+          - mysql-server
+          - python3-pymysql
+        state: present
+
+    - name: Start and enable MySQL
+      service:
+        name: mysql
+        state: started
+        enabled: yes
+
+    - name: Create epicbook database
+      mysql_db:
+        name: "{{ mysql_database }}"
+        state: present
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+
+    - name: Create epicbook MySQL user
+      mysql_user:
+        name: "{{ mysql_user }}"
+        password: "{{ mysql_password }}"
+        priv: "{{ mysql_database }}.*:ALL"
+        host: "%"
+        state: present
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+
+    - name: Allow MySQL remote connections
+      shell: |
+        sed -i 's/bind-address.*=.*/bind-address = 0.0.0.0/' /etc/mysql/mysql.conf.d/mysqld.cnf
+      notify: Restart MySQL
+
+  handlers:
+    - name: Restart MySQL
+      service:
+        name: mysql
+        state: restarted
+
+- name: Configure Frontend VM - EpicBook App + Nginx
+  hosts: frontend
+  become: yes
+  vars_files:
+    - vars.yml
+
+  tasks:
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install required packages
+      apt:
+        name:
+          - nodejs
+          - npm
+          - git
+          - curl
+          - nginx
+        state: present
+
+    - name: Start and enable Nginx
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Install PM2 globally
+      npm:
+        name: pm2
+        global: yes
+        state: present
+
+    - name: Clone EpicBook repository
+      git:
+        repo: "https://github.com/pravinmishraaws/theepicbook.git"
+        dest: /opt/epicbook
+        version: main
+        force: yes
+
+    - name: Install Node dependencies
+      npm:
+        path: /opt/epicbook
+        state: present
+
+    - name: Create .env file
+      copy:
+        dest: /opt/epicbook/.env
+        content: |
+          DB_HOST={{ mysql_host }}
+          DB_USER={{ mysql_user }}
+          DB_PASSWORD={{ mysql_password }}
+          DB_NAME={{ mysql_database }}
+          PORT={{ backend_port }}
+        owner: azureuser
+        mode: '0600'
+
+    - name: Set ownership of epicbook directory
+      file:
+        path: /opt/epicbook
+        owner: azureuser
+        group: azureuser
+        recurse: yes
+
+    - name: Start EpicBook app with PM2
+      shell: |
+        cd /opt/epicbook
+        pm2 delete epicbook || true
+        pm2 start server.js --name epicbook
+        pm2 save
+      become_user: azureuser
+
+    - name: Configure Nginx reverse proxy
+      copy:
+        dest: /etc/nginx/sites-available/epicbook
+        content: |
+          server {
+              listen 80;
+              server_name _;
+
+              location / {
+                  proxy_pass http://127.0.0.1:3000;
+                  proxy_http_version 1.1;
+                  proxy_set_header Upgrade $http_upgrade;
+                  proxy_set_header Connection 'upgrade';
+                  proxy_set_header Host $host;
+                  proxy_cache_bypass $http_upgrade;
+              }
+          }
+
+    - name: Enable EpicBook site
+      file:
+        src: /etc/nginx/sites-available/epicbook
+        dest: /etc/nginx/sites-enabled/epicbook
+        state: link
+
+    - name: Remove default Nginx site
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+
+    - name: Restart Nginx
+      service:
+        name: nginx
+        state: restarted
+
+    - name: Verify app is running
+      shell: curl -s -o /dev/null -w "%{http_code}" http://localhost
+      register: http_status
+
+    - name: Print HTTP status
+      debug:
+        msg: "EpicBook HTTP status: {{ http_status.stdout }}"

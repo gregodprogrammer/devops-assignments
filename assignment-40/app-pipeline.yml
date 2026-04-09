@@ -1,0 +1,133 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  name: SelfHostedPool
+
+variables:
+  ANSIBLE_DIR: '$(System.DefaultWorkingDirectory)/ansible'
+
+stages:
+
+  - stage: Install
+    displayName: 'Install Ansible'
+    jobs:
+      - job: InstallAnsible
+        steps:
+          - script: |
+              sudo apt-get update -y
+              sudo apt-get install -y ansible
+              ansible --version
+            displayName: 'Install Ansible'
+
+  - stage: Prepare
+    displayName: 'Prepare SSH Key and Inventory'
+    dependsOn: Install
+    jobs:
+      - job: PrepareJob
+        steps:
+          - script: |
+              sudo apt-get update -y
+              sudo apt-get install -y ansible
+            displayName: 'Install Ansible'
+
+          - task: DownloadSecureFile@1
+            name: sshKey
+            displayName: 'Download SSH Private Key'
+            inputs:
+              secureFile: 'azureagent-key'
+
+          - script: |
+              cp $(sshKey.secureFilePath) /tmp/azureagent-key
+              chmod 600 /tmp/azureagent-key
+              echo "SSH key ready"
+            displayName: 'Set SSH Key Permissions'
+
+          - script: |
+              sed -i 's/FRONTEND_IP/$(FRONTEND_IP)/g' $(ANSIBLE_DIR)/inventory.ini
+              sed -i 's/BACKEND_IP/$(BACKEND_IP)/g' $(ANSIBLE_DIR)/inventory.ini
+              sed -i 's/MYSQL_FQDN/$(MYSQL_FQDN)/g' $(ANSIBLE_DIR)/vars.yml
+              echo "--- inventory.ini ---"
+              cat $(ANSIBLE_DIR)/inventory.ini
+              echo "--- vars.yml ---"
+              cat $(ANSIBLE_DIR)/vars.yml
+            displayName: 'Update Inventory and Vars'
+
+  - stage: ConfigureBackend
+    displayName: 'Configure Backend'
+    dependsOn: Prepare
+    jobs:
+      - job: BackendJob
+        steps:
+          - script: |
+              sudo apt-get update -y
+              sudo apt-get install -y ansible
+            displayName: 'Install Ansible'
+
+          - task: DownloadSecureFile@1
+            name: sshKey
+            displayName: 'Download SSH Key'
+            inputs:
+              secureFile: 'azureagent-key'
+
+          - script: |
+              cp $(sshKey.secureFilePath) /tmp/azureagent-key
+              chmod 600 /tmp/azureagent-key
+            displayName: 'Set SSH Key Permissions'
+
+          - script: |
+              sed -i 's/FRONTEND_IP/$(FRONTEND_IP)/g' $(ANSIBLE_DIR)/inventory.ini
+              sed -i 's/BACKEND_IP/$(BACKEND_IP)/g' $(ANSIBLE_DIR)/inventory.ini
+              sed -i 's/MYSQL_FQDN/$(MYSQL_FQDN)/g' $(ANSIBLE_DIR)/vars.yml
+            displayName: 'Update Inventory and Vars'
+
+          - script: |
+              ansible-playbook \
+                -i $(ANSIBLE_DIR)/inventory.ini \
+                $(ANSIBLE_DIR)/playbook.yml \
+                --limit backend \
+                -v
+            displayName: 'Run Ansible - Backend'
+
+  - stage: ConfigureFrontend
+    displayName: 'Configure Frontend'
+    dependsOn: ConfigureBackend
+    jobs:
+      - job: FrontendJob
+        steps:
+          - script: |
+              sudo apt-get update -y
+              sudo apt-get install -y ansible
+            displayName: 'Install Ansible'
+
+          - task: DownloadSecureFile@1
+            name: sshKey
+            displayName: 'Download SSH Key'
+            inputs:
+              secureFile: 'azureagent-key'
+
+          - script: |
+              cp $(sshKey.secureFilePath) /tmp/azureagent-key
+              chmod 600 /tmp/azureagent-key
+            displayName: 'Set SSH Key Permissions'
+
+          - script: |
+              sed -i 's/FRONTEND_IP/$(FRONTEND_IP)/g' $(ANSIBLE_DIR)/inventory.ini
+              sed -i 's/BACKEND_IP/$(BACKEND_IP)/g' $(ANSIBLE_DIR)/inventory.ini
+              sed -i 's/MYSQL_FQDN/$(MYSQL_FQDN)/g' $(ANSIBLE_DIR)/vars.yml
+            displayName: 'Update Inventory and Vars'
+
+          - script: |
+              ansible-playbook \
+                -i $(ANSIBLE_DIR)/inventory.ini \
+                $(ANSIBLE_DIR)/playbook.yml \
+                --limit frontend \
+                -v
+            displayName: 'Run Ansible - Frontend'
+
+          - script: |
+              echo "Verifying EpicBook is live..."
+              curl -s -o /dev/null -w "HTTP Status: %{http_code}\n" http://$(FRONTEND_IP)
+            displayName: 'Verify EpicBook Live'
