@@ -232,9 +232,9 @@ EOF
 ### Issue 6: No books showing
 **Solution:** Run seed files from the repo:
 ```bash
-mysql -u epicadmin -pEpicbook123 bookstore < /opt/epicbook/db/BuyTheBook_Schema.sql
-mysql -u epicadmin -pEpicbook123 bookstore < /opt/epicbook/db/author_seed.sql
-mysql -u epicadmin -pEpicbook123 bookstore < /opt/epicbook/db/books_seed.sql
+mysql -u epicadmin -p<YOUR_MYSQL_PASSWORD> bookstore < /opt/epicbook/db/BuyTheBook_Schema.sql
+mysql -u epicadmin -p<YOUR_MYSQL_PASSWORD> bookstore < /opt/epicbook/db/author_seed.sql
+mysql -u epicadmin -p<YOUR_MYSQL_PASSWORD> bookstore < /opt/epicbook/db/books_seed.sql
 ```
 
 ---
