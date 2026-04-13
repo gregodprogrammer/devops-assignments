@@ -1,5 +1,5 @@
 mysql_host: "20.63.60.69"
 mysql_user: "epicadmin"
-mysql_password: "Epicbook123"
+mysql_password: "{{ lookup('env', 'MYSQL_PASSWORD') }}"
 mysql_database: "epicbook"
 backend_port: "3000"
