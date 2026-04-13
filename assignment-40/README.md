@@ -12,12 +12,12 @@ A complete enterprise CI/CD deployment of the EpicBook bookstore application usi
 |------|---------|
 | **Infra Repo** | infra-epicbook (Terraform) |
 | **App Repo** | theepicbook (Ansible + App) |
-| **Frontend VM** | vm-frontend \| Standard_B2s_v2 \| Canada Central \| 52.139.34.120 |
-| **Backend VM** | vm-backend \| Standard_B2als_v2 \| Canada Central \| 20.63.60.69 |
+| **Frontend VM** | vm-frontend \| Standard_B2s_v2 \| Canada Central \| <frontend-ip> |
+| **Backend VM** | vm-backend \| Standard_B2als_v2 \| Canada Central \| <backend-ip> |
 | **Database** | MySQL 8.0 on vm-backend |
 | **Web Server** | Nginx (reverse proxy → Node.js port 8080) |
 | **App** | EpicBook — Node.js + Express + Handlebars |
-| **Live URL** | http://52.139.34.120 |
+| **Live URL** | http://<frontend-ip> |
 | **SPN** | epicbook-spn (Azure AD App Registration) |
 | **Service Connection** | epicbook-arm (Azure Resource Manager) |
 
@@ -26,13 +26,13 @@ A complete enterprise CI/CD deployment of the EpicBook bookstore application usi
 ## Architecture
 
 ```
-Browser → http://52.139.34.120
+Browser → http://<frontend-ip>
               |
-         Nginx (port 80)          vm-frontend (52.139.34.120)
+         Nginx (port 80)          vm-frontend (<frontend-ip>)
               |
          Node.js (port 8080)
               |
-         MySQL (port 3306)        vm-backend (20.63.60.69)
+         MySQL (port 3306)        vm-backend (<backend-ip>)
 ```
 
 ---
@@ -125,8 +125,8 @@ terraform apply -auto-approve \
 
 Outputs after apply:
 ```
-frontend_public_ip = "52.139.34.120"
-backend_public_ip  = "20.63.60.69"
+frontend_public_ip = "<assigned-by-azure>"
+backend_public_ip  = "<assigned-by-azure>"
 ```
 
 ### SS1 — Azure Portal showing both VMs running
@@ -150,9 +150,9 @@ Create `ansible/inventory.ini`, `ansible/vars.yml`, `ansible/playbook.yml`, `ans
 
 Update inventory with actual IPs:
 ```bash
-sed -i 's/FRONTEND_IP/52.139.34.120/' ansible/inventory.ini
-sed -i 's/BACKEND_IP/20.63.60.69/' ansible/inventory.ini
-sed -i 's/MYSQL_FQDN/20.63.60.69/' ansible/vars.yml
+sed -i 's/FRONTEND_IP/<frontend-ip>/' ansible/inventory.ini
+sed -i 's/BACKEND_IP/<backend-ip>/' ansible/inventory.ini
+sed -i 's/MYSQL_FQDN/<backend-ip>/' ansible/vars.yml
 ```
 
 ```bash
@@ -196,7 +196,7 @@ ansible-playbook -i ansible/inventory.ini ansible/playbook.yml --limit frontend 
 **Solution:** Install MySQL directly on vm-backend instead of using Azure Flexible Server
 
 ### Issue 2: Port 3306 blocked by NSG
-**Error:** `ETIMEDOUT connecting to 20.63.60.69:3306`
+**Error:** `ETIMEDOUT connecting to <backend-ip>:3306`
 **Solution:** Add NSG rule to allow port 3306 on nsg-backend:
 ```bash
 az network nsg rule create \
@@ -241,7 +241,7 @@ mysql -u epicadmin -p<YOUR_MYSQL_PASSWORD> bookstore < /opt/epicbook/db/books_se
 
 ## Step 9 — Verify EpicBook is Live
 
-Open browser at: **http://52.139.34.120**
+Open browser at: **http://<frontend-ip>**
 
 ### SS6 — PM2 status showing epicbook online
 ![SS6](screenshots/SS6.png)
