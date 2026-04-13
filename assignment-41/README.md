@@ -109,9 +109,9 @@ docker ps
 | SS1 | ![SS1](screenshots/SS1_VM_Overview.png) | Azure Portal VM overview + NSG rules |
 | SS2 | ![SS2](screenshots/SS2_CloudInit_Docker.png) | cloud-init-output.log showing Docker install |
 | SS3 | ![SS3](screenshots/SS3_Docker_Version.png) | docker --version on VM terminal |
-| SS4 | ![SS4](screenshots/SS4-docker images.png) | docker images showing static-site:latest |
-| SS5 | ![SS5](screenshots/SS5-docker ps.png) | docker ps showing port mapping 0.0.0.0:80->80/tcp |
-| SS6 | ![SS6](screenshots/SS6-browser live.png) | Browser showing live site |
+| SS4 | ![SS4](screenshots/SS4-docker-images.png) | docker images showing static-site:latest |
+| SS5 | ![SS5](screenshots/SS5-docker-ps.png) | docker ps showing port mapping 0.0.0.0:80->80/tcp |
+| SS6 | ![SS6](screenshots/SS6-browser-live.png) | Browser showing live site |
 | SS7 | ![SS7](screenshots/SS7.png) | Dockerfile content |
 
 ## Lessons Learned
