@@ -1,23 +1,20 @@
 variable "subscription_id" {
-  description = "Azure Subscription ID"
+  description = "Azure Subscription ID - set via ARM_SUBSCRIPTION_ID env var or terraform.tfvars"
   type        = string
-  default     = "7ad60dd1-1f06-4b1f-a6b1-6a5a5a7bcc50"
 }
 
 variable "tenant_id" {
-  description = "Azure Tenant ID"
+  description = "Azure Tenant ID - set via ARM_TENANT_ID env var or terraform.tfvars"
   type        = string
-  default     = "393a8838-12b0-4787-b70f-28b6b4d0a146"
 }
 
 variable "client_id" {
-  description = "SPN Client ID"
+  description = "SPN Client ID - set via ARM_CLIENT_ID env var or terraform.tfvars"
   type        = string
-  default     = "05375351-4376-4b36-bd12-9c35c0325772"
 }
 
 variable "client_secret" {
-  description = "SPN Client Secret - passed via pipeline"
+  description = "SPN Client Secret - set via ARM_CLIENT_SECRET env var or -var flag"
   type        = string
   sensitive   = true
 }

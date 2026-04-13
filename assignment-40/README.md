@@ -41,7 +41,7 @@ Browser → http://52.139.34.120
 
 ```bash
 az ad sp create-for-rbac --name "epicbook-spn" --role Contributor \
-  --scopes /subscriptions/7ad60dd1-1f06-4b1f-a6b1-6a5a5a7bcc50
+  --scopes /subscriptions/<your-subscription-id>
 ```
 
 Save the output — `appId` (Client ID) and `password` (Client Secret). The secret is shown only once.
@@ -88,9 +88,9 @@ git push origin main
 3. Select **App registration or managed identity (manual)**
 4. Select **Service principal key** under Credential
 5. Fill in:
-   - Subscription ID: `7ad60dd1-1f06-4b1f-a6b1-6a5a5a7bcc50`
-   - Application (client) ID: `05375351-4376-4b36-bd12-9c35c0325772`
-   - Directory (tenant) ID: `393a8838-12b0-4787-b70f-28b6b4d0a146`
+   - Subscription ID: `<your-subscription-id>`
+   - Application (client) ID: `<your-client-id>`
+   - Directory (tenant) ID: `<your-tenant-id>`
    - Client secret: *(saved SPN secret)*
    - Name: `epicbook-arm`
 6. Check **Grant access permission to all pipelines**
@@ -108,10 +108,10 @@ git push origin main
 ```bash
 cd ~/tf-assignment-40/infra-epicbook
 
-export ARM_CLIENT_ID="05375351-4376-4b36-bd12-9c35c0325772"
+export ARM_CLIENT_ID="<your-client-id>"
 export ARM_CLIENT_SECRET="YOUR_CLIENT_SECRET"
-export ARM_TENANT_ID="393a8838-12b0-4787-b70f-28b6b4d0a146"
-export ARM_SUBSCRIPTION_ID="7ad60dd1-1f06-4b1f-a6b1-6a5a5a7bcc50"
+export ARM_TENANT_ID="<your-tenant-id>"
+export ARM_SUBSCRIPTION_ID="<your-subscription-id>"
 
 terraform init
 terraform plan \
